@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Whisper Local - 음성 인식</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 0.9em;
+        }
+
+        .badge {
+            display: inline-block;
+            background: #10b981;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 15px 30px;
+            font-size: 16px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        #recordBtn {
+            background: #ef4444;
+            color: white;
+        }
+
+        #recordBtn:hover:not(:disabled) {
+            background: #dc2626;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+        }
+
+        #recordBtn.recording {
+            background: #f59e0b;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        #uploadBtn {
+            background: #3b82f6;
+            color: white;
+        }
+
+        #uploadBtn:hover:not(:disabled) {
+            background: #2563eb;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+
+        #clearBtn {
+            background: #6b7280;
+            color: white;
+        }
+
+        #clearBtn:hover:not(:disabled) {
+            background: #4b5563;
+        }
+
+        .language-select {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+
+        select {
+            padding: 10px;
+            border-radius: 8px;
+            border: 2px solid #e5e7eb;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .status {
+            text-align: center;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .status.info {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .status.success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .status.recording {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .result {
+            background: #f9fafb;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 20px;
+            min-height: 200px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            line-height: 1.6;
+            color: #374151;
+        }
+
+        .result.empty {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #9ca3af;
+            font-style: italic;
+        }
+
+        .download-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .download-btn {
+            background: #10b981;
+            color: white;
+            padding: 10px 20px;
+            font-size: 14px;
+        }
+
+        .download-btn:hover:not(:disabled) {
+            background: #059669;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .info-box {
+            background: #f0f9ff;
+            border: 2px solid #bae6fd;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+            color: #0c4a6e;
+        }
+
+        .info-box ul {
+            margin-left: 20px;
+            margin-top: 10px;
+        }
+
+        .info-box li {
+            margin-bottom: 5px;
+        }
+
+        @media (max-width: 640px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.5em;
+            }
+
+            button {
+                padding: 12px 20px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎤 Whisper Local</h1>
+        <div class="subtitle">
+            <span class="badge">100% 로컬</span>
+            <span class="badge">무료</span>
+            <span class="badge">API 키 불필요</span>
+        </div>
+
+        <div class="info-box">
+            <strong>💡 특징:</strong>
+            <ul>
+                <li>OpenAI Whisper를 사용한 완전 로컬 음성 인식</li>
+                <li>크레딧 소비 없음, API 키 불필요</li>
+                <li>녹음 또는 파일 업로드 지원</li>
+                <li>다국어 지원 (자동 감지 또는 수동 선택)</li>
+            </ul>
+        </div>
+
+        <div class="language-select">
+            <label for="languageSelect">언어:</label>
+            <select id="languageSelect">
+                <option value="">자동 감지</option>
+                <option value="ko">한국어</option>
+                <option value="en">English</option>
+                <option value="ja">日本語</option>
+                <option value="zh">中文</option>
+                <option value="es">Español</option>
+                <option value="fr">Français</option>
+                <option value="de">Deutsch</option>
+            </select>
+        </div>
+
+        <div class="controls">
+            <button id="recordBtn">
+                <span class="btn-icon">🎙️</span>
+                <span class="btn-text">녹음 시작</span>
+            </button>
+            <button id="uploadBtn">
+                <span class="btn-icon">📁</span>
+                <span class="btn-text">파일 업로드</span>
+            </button>
+            <button id="clearBtn">
+                <span class="btn-icon">🗑️</span>
+                <span class="btn-text">초기화</span>
+            </button>
+        </div>
+
+        <div id="status" class="status info">
+            백엔드 서버가 실행 중인지 확인하세요 (http://localhost:8000)
+        </div>
+
+        <div id="result" class="result empty">
+            여기에 변환된 텍스트가 표시됩니다
+        </div>
+
+        <div class="download-buttons">
+            <button id="downloadTextBtn" class="download-btn" disabled>
+                <span>💾 텍스트 저장</span>
+            </button>
+            <button id="downloadAudioBtn" class="download-btn" disabled>
+                <span>🎵 오디오 저장</span>
+            </button>
+        </div>
+
+        <input type="file" id="fileInput" accept="audio/*">
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

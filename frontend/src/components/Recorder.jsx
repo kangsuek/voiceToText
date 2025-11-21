@@ -10,6 +10,8 @@ const Recorder = () => {
     const [status, setStatus] = useState('idle');                   // 상태: idle(대기), connecting(연결중), recording(녹음중), error(오류)
     const [error, setError] = useState(null);                       // 에러 메시지
     const [hasAudio, setHasAudio] = useState(false);                // 오디오 파일 저장 가능 여부
+    const [speakerTranscripts, setSpeakerTranscripts] = useState([]); // 화자별 구분된 텍스트
+    const [isProcessingSpeakers, setIsProcessingSpeakers] = useState(false); // 화자 분리 처리 중
 
     // --- Refs (참조 변수) ---
     const mediaRecorderRef = useRef(null);       // 파일 저장을 위한 MediaRecorder
@@ -192,6 +194,52 @@ const Recorder = () => {
 
         setIsRecording(false);
         setStatus('idle');
+
+        // 녹음 종료 후 화자 분리 처리
+        processSpeakerDiarization();
+    };
+
+    // --- 화자 분리 처리 ---
+    const processSpeakerDiarization = async () => {
+        if (audioChunksRef.current.length === 0) {
+            return;
+        }
+
+        setIsProcessingSpeakers(true);
+        setStatus('processing');
+
+        try {
+            // 오디오 Blob 생성
+            const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+
+            // FormData 생성
+            const formData = new FormData();
+            formData.append('audio', audioBlob, 'recording.webm');
+
+            // 백엔드로 전송
+            const response = await fetch('http://localhost:3000/api/transcribe-with-speakers', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                throw new Error('화자 분리 처리 실패');
+            }
+
+            const data = await response.json();
+
+            if (data.success && data.speakers) {
+                setSpeakerTranscripts(data.speakers);
+                console.log('화자 분리 완료:', data.speakers);
+            }
+
+        } catch (err) {
+            console.error('화자 분리 오류:', err);
+            setError('화자 분리 중 오류가 발생했습니다.');
+        } finally {
+            setIsProcessingSpeakers(false);
+            setStatus('idle');
+        }
     };
 
     // --- 텍스트 파일 다운로드 ---
@@ -230,6 +278,42 @@ const Recorder = () => {
         window.URL.revokeObjectURL(url);
     };
 
+    // --- 화자별 텍스트 다운로드 ---
+    const downloadSpeakerTranscripts = () => {
+        if (speakerTranscripts.length === 0) {
+            alert("화자별 텍스트가 없습니다.");
+            return;
+        }
+
+        // 화자별로 포맷팅
+        let formattedText = "=== 화자별 구분된 대화록 ===\n\n";
+
+        speakerTranscripts.forEach((item, index) => {
+            const speakerLabel = item.speaker || `화자 ${index + 1}`;
+            const startTime = formatTime(item.start);
+            const endTime = formatTime(item.end);
+
+            formattedText += `[${speakerLabel}] (${startTime} - ${endTime})\n`;
+            formattedText += `${item.text}\n\n`;
+        });
+
+        const element = document.createElement("a");
+        const file = new Blob([formattedText], { type: 'text/plain;charset=utf-8' });
+        element.href = URL.createObjectURL(file);
+        element.download = "speaker_transcription.txt";
+        document.body.appendChild(element);
+        element.click();
+        document.body.removeChild(element);
+    };
+
+    // --- 시간 포맷 함수 ---
+    const formatTime = (seconds) => {
+        if (!seconds && seconds !== 0) return '00:00';
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    };
+
     return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900 text-white p-4">
             <div className="w-full max-w-2xl bg-white/10 backdrop-blur-lg rounded-3xl p-8 shadow-2xl border border-white/20">
@@ -241,19 +325,62 @@ const Recorder = () => {
                     <p className="text-gray-400">ElevenLabs Transcription API Demo</p>
                 </div>
 
-                {/* 텍스트 표시 영역 */}
-                <div className="h-64 overflow-y-auto bg-black/30 rounded-xl p-4 mb-8 border border-white/10 font-mono text-sm leading-relaxed scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent">
-                    {(transcript || partialTranscript) ? (
-                        <>
-                            <span className="text-gray-300">{transcript}</span>
-                            <span className="text-blue-400 animate-pulse ml-1">{partialTranscript}</span>
-                        </>
-                    ) : (
-                        <div className="h-full flex items-center justify-center text-gray-600 italic">
-                            마이크 버튼을 눌러 녹음을 시작하세요...
-                        </div>
-                    )}
+                {/* 실시간 텍스트 표시 영역 */}
+                <div className="mb-4">
+                    <h3 className="text-sm font-semibold text-gray-400 mb-2">실시간 변환</h3>
+                    <div className="h-48 overflow-y-auto bg-black/30 rounded-xl p-4 border border-white/10 font-mono text-sm leading-relaxed scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent">
+                        {(transcript || partialTranscript) ? (
+                            <>
+                                <span className="text-gray-300">{transcript}</span>
+                                <span className="text-blue-400 animate-pulse ml-1">{partialTranscript}</span>
+                            </>
+                        ) : (
+                            <div className="h-full flex items-center justify-center text-gray-600 italic">
+                                마이크 버튼을 눌러 녹음을 시작하세요...
+                            </div>
+                        )}
+                    </div>
                 </div>
+
+                {/* 화자별 구분된 텍스트 표시 영역 */}
+                {speakerTranscripts.length > 0 && (
+                    <div className="mb-8">
+                        <h3 className="text-sm font-semibold text-gray-400 mb-2 flex items-center gap-2">
+                            <span>화자별 구분</span>
+                            {isProcessingSpeakers && (
+                                <Loader2 className="w-4 h-4 animate-spin text-blue-400" />
+                            )}
+                        </h3>
+                        <div className="h-64 overflow-y-auto bg-black/30 rounded-xl p-4 border border-white/10 font-mono text-sm leading-relaxed scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent">
+                            {speakerTranscripts.map((item, index) => {
+                                const colors = [
+                                    'text-blue-400',
+                                    'text-green-400',
+                                    'text-yellow-400',
+                                    'text-pink-400',
+                                    'text-purple-400'
+                                ];
+                                const speakerColor = colors[index % colors.length];
+
+                                return (
+                                    <div key={index} className="mb-4">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span className={`font-bold ${speakerColor}`}>
+                                                [{item.speaker || `화자 ${index + 1}`}]
+                                            </span>
+                                            <span className="text-xs text-gray-500">
+                                                {formatTime(item.start)} - {formatTime(item.end)}
+                                            </span>
+                                        </div>
+                                        <div className="text-gray-300 pl-4">
+                                            {item.text}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
 
                 {/* 컨트롤 버튼 영역 */}
                 <div className="flex flex-col items-center gap-6">
@@ -290,11 +417,12 @@ const Recorder = () => {
                         {status === 'idle' && 'Click to Record'}
                         {status === 'connecting' && '연결 중...'}
                         {status === 'recording' && '듣고 있습니다...'}
+                        {status === 'processing' && '화자 분리 중...'}
                         {error && <span className="text-red-400">{error}</span>}
                     </div>
 
                     {/* 다운로드 버튼들 */}
-                    <div className="flex gap-4 mt-4">
+                    <div className="flex flex-wrap gap-3 mt-4 justify-center">
                         <motion.button
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
@@ -316,6 +444,18 @@ const Recorder = () => {
                             <FileText className="w-4 h-4" />
                             <span>Save Text</span>
                         </motion.button>
+
+                        {speakerTranscripts.length > 0 && (
+                            <motion.button
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={downloadSpeakerTranscripts}
+                                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 rounded-lg border border-blue-400/30 transition-colors shadow-lg"
+                            >
+                                <FileText className="w-4 h-4" />
+                                <span>Save Speaker Text</span>
+                            </motion.button>
+                        )}
                     </div>
 
                 </div>
