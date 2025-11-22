@@ -11,7 +11,7 @@ class Settings:
     XI_API_KEY: str = os.getenv("XI_API_KEY")
     ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")  # development, production
     FRONTEND_URL: str = os.getenv("FRONTEND_URL", "http://localhost:5173")
-    ALLOWED_ORIGINS: list[str] = []
+    ALLOWED_ORIGINS: list = ["*"]
 
     def __init__(self):
         # 현재 디렉토리에 .env가 없을 경우, 상위 디렉토리(프로젝트 루트)에서 찾기 시도
