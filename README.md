@@ -30,23 +30,20 @@ PC와 모바일에서 동작하며, 녹음된 내용을 화면에 표시하고 W
 
 ## 설치 및 실행
 
-### 1. 백엔드 설정 (토큰 발급 서버)
+### 1. 환경 변수 설정
 
 루트 디렉토리에서 다음을 실행합니다.
 
 ```bash
-# 의존성 설치
-npm install
-
 # 환경 변수 설정
 cp .env.example .env
 # .env 파일을 열고 XI_API_KEY에 API 키를 입력하세요.
 ```
 
-서버 실행:
+### 2. 서버 실행
 
 ```bash
-./start.sh # 실행 (백엔드, 프론트엔드 실행)
+./start.sh # 실행 (Python 백엔드, React 프론트엔드 자동 실행)
 ```
 브라우저에서 `http://localhost:5173` (또는 터미널에 표시된 주소)를 엽니다.
 
@@ -95,10 +92,17 @@ cp .env.example .env
 
   📊 API 엔드포인트
 
-  새로 추가된 엔드포인트:
+  Backend (FastAPI - http://localhost:8000):
+  - GET /api/get-token: ElevenLabs Realtime API 토큰 발급
   - POST /api/transcribe-with-speakers: 오디오 파일을 받아 화자 분리된 텍스트 반환
-    - server.js:60-125
+    - backend_python/routers/auth.py:24-56
 
   이제 2명 이상의 화자가 있는 대화를 녹음하면 자동으로 구분되어 표시됩니다! 🎤👥
+
+## 기술 스택
+
+- **Frontend**: React + Vite, TailwindCSS, Framer Motion
+- **Backend**: Python FastAPI
+- **API**: ElevenLabs Scribe v2 (Realtime), ElevenLabs Scribe v1 (화자 분리)
 
 ---
