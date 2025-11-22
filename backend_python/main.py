@@ -4,21 +4,14 @@ from .routers import auth
 from .config import settings
 
 # FastAPI 앱 초기화
-app = FastAPI(title="ElevenLabs Realtime Transcription Backend")
+app = FastAPI(
+    title="ElevenLabs Realtime Transcription Backend",
+    description="ElevenLabs Realtime API를 활용한 실시간 음성 인식 및 화자 분리 백엔드 서버입니다.",
+    version="1.0.0"
+)
 
 # CORS (Cross-Origin Resource Sharing) 설정
-# 환경에 따라 허용할 오리진 설정
-if settings.ENVIRONMENT == "production":
-    # 프로덕션: 특정 도메인만 허용
-    allowed_origins = [settings.FRONTEND_URL]
-else:
-    # 개발: 로컬 개발 환경 허용
-    allowed_origins = [
-        "http://localhost:5173",
-        "http://localhost:3000",
-        "http://127.0.0.1:5173",
-        "http://127.0.0.1:3000",
-    ]
+allowed_origins = settings.ALLOWED_ORIGINS
 
 app.add_middleware(
     CORSMiddleware,

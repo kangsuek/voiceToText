@@ -1,0 +1,31 @@
+{
+  "title": "Realtime Scribe",
+  "subtitle": "Powered by ElevenLabs AI",
+  "realtimeTranscript": "Real-time Transcript",
+  "recording": "Recording",
+  "speakerSegments": "Speaker Segments",
+  "segments": "segments",
+  "audioPlayer": "Audio Player",
+  "startRecording": "Start Recording",
+  "connecting": "Connecting...",
+  "listening": "Listening",
+  "processing": "Processing speakers...",
+  "micPlaceholder": "Click the mic button to start recording",
+  "clickToPlay": "Click to play from this point",
+  "downloadAudio": "Audio",
+  "downloadText": "Text",
+  "downloadSpeaker": "Speakers",
+  "footer": "Built with ❤️ using ElevenLabs Speech-to-Text API",
+  "speaker": "Speaker",
+  "speakerTranscriptHeader": "=== Speaker-Separated Transcript ===",
+  "errors": {
+    "noText": "No text to save.",
+    "noAudio": "No audio to save.",
+    "noSpeakers": "No speaker transcripts available."
+  },
+  "success": {
+    "textSaved": "Text file saved successfully.",
+    "audioSaved": "Audio file saved successfully.",
+    "speakerSaved": "Speaker transcripts saved successfully."
+  }
+}

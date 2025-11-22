@@ -13,11 +13,13 @@
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
   min-width: 320px;
   min-height: 100vh;
-  background: linear-gradient(135deg, #020617 0%, #1e1b4b 50%, #581c87 100%);
+}
+
+#root {
+  min-height: 100vh;
+  width: 100%;
 }
 
 /* 커스텀 애니메이션 */

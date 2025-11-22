@@ -1,0 +1,31 @@
+{
+  "title": "실시간 음성 기록",
+  "subtitle": "ElevenLabs AI 제공",
+  "realtimeTranscript": "실시간 변환",
+  "recording": "녹음중",
+  "speakerSegments": "화자별 구분",
+  "segments": "개 세그먼트",
+  "audioPlayer": "오디오 플레이어",
+  "startRecording": "녹음 시작하기",
+  "connecting": "연결 중...",
+  "listening": "듣고 있습니다",
+  "processing": "화자 분리 중...",
+  "micPlaceholder": "마이크 버튼을 눌러 녹음을 시작하세요",
+  "clickToPlay": "클릭하여 이 부분부터 재생",
+  "downloadAudio": "오디오",
+  "downloadText": "텍스트",
+  "downloadSpeaker": "화자별",
+  "footer": "ElevenLabs 음성-텍스트 API로 제작되었습니다 ❤️",
+  "speaker": "화자",
+  "speakerTranscriptHeader": "=== 화자별 구분된 대화록 ===",
+  "errors": {
+    "noText": "저장할 텍스트가 없습니다.",
+    "noAudio": "저장할 오디오가 없습니다.",
+    "noSpeakers": "화자별 텍스트가 없습니다."
+  },
+  "success": {
+    "textSaved": "텍스트 파일이 저장되었습니다.",
+    "audioSaved": "오디오 파일이 저장되었습니다.",
+    "speakerSaved": "화자별 텍스트가 저장되었습니다."
+  }
+}
