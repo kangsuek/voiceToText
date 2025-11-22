@@ -458,14 +458,25 @@ const Recorder = () => {
     };
 
     return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900 text-white p-4">
+        <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950 to-purple-950 text-white p-4 relative overflow-hidden">
+            {/* 배경 장식 요소 */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute top-1/4 -left-20 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse"></div>
+                <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse" style={{animationDelay: '1s'}}></div>
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-indigo-500/5 rounded-full blur-3xl"></div>
+            </div>
+
             <Toaster
                 position="top-center"
                 toastOptions={{
                     duration: 3000,
                     style: {
-                        background: '#363636',
+                        background: 'rgba(30, 41, 59, 0.95)',
                         color: '#fff',
+                        backdropFilter: 'blur(10px)',
+                        border: '1px solid rgba(148, 163, 184, 0.1)',
+                        borderRadius: '12px',
+                        padding: '16px',
                     },
                     success: {
                         iconTheme: {
@@ -481,165 +492,280 @@ const Recorder = () => {
                     },
                 }}
             />
-            <div className="w-full max-w-2xl bg-white/10 backdrop-blur-lg rounded-3xl p-8 shadow-2xl border border-white/20">
 
-                <div className="text-center mb-8">
-                    <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400 mb-2">
-                        Realtime Scribe
-                    </h1>
-                    <p className="text-gray-400">ElevenLabs Transcription API Demo</p>
-                </div>
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="w-full max-w-3xl relative z-10"
+            >
+                <div className="bg-gradient-to-br from-white/5 to-white/10 backdrop-blur-2xl rounded-3xl p-8 shadow-2xl border border-white/10 hover:border-white/20 transition-all duration-300">
+
+                    {/* 헤더 */}
+                    <div className="text-center mb-10">
+                        <motion.h1
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.2 }}
+                            className="text-5xl font-bold mb-3 relative inline-block"
+                        >
+                            <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 animate-gradient">
+                                Realtime Scribe
+                            </span>
+                        </motion.h1>
+                        <motion.p
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 0.3 }}
+                            className="text-slate-400 text-sm font-medium flex items-center justify-center gap-2"
+                        >
+                            <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                            Powered by ElevenLabs AI
+                        </motion.p>
+                    </div>
 
                 {/* 실시간 텍스트 표시 영역 */}
-                <div className="mb-4">
-                    <h3 className="text-sm font-semibold text-gray-400 mb-2">실시간 변환</h3>
-                    <div className="h-48 overflow-y-auto bg-black/30 rounded-xl p-4 border border-white/10 font-mono text-sm leading-relaxed scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent">
+                <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 }}
+                    className="mb-6"
+                >
+                    <div className="flex items-center gap-2 mb-3">
+                        <div className="w-1 h-5 bg-gradient-to-b from-blue-400 to-purple-400 rounded-full"></div>
+                        <h3 className="text-sm font-semibold text-slate-300">실시간 변환</h3>
+                        {isRecording && (
+                            <span className="ml-auto flex items-center gap-1.5 text-xs text-red-400">
+                                <span className="w-2 h-2 bg-red-400 rounded-full animate-pulse"></span>
+                                Recording
+                            </span>
+                        )}
+                    </div>
+                    <div className="h-48 overflow-y-auto bg-gradient-to-br from-slate-900/50 to-slate-800/30 rounded-2xl p-5 border border-slate-700/50 font-mono text-sm leading-relaxed backdrop-blur-sm hover:border-slate-600/50 transition-colors">
                         {(transcript || partialTranscript) ? (
-                            <>
-                                <span className="text-gray-300">{transcript}</span>
-                                <span className="text-blue-400 animate-pulse ml-1">{partialTranscript}</span>
-                            </>
+                            <div className="space-y-1">
+                                <span className="text-slate-200">{transcript}</span>
+                                <span className="text-blue-400 animate-pulse ml-1 inline-flex items-center gap-1">
+                                    {partialTranscript}
+                                    {partialTranscript && <span className="inline-block w-0.5 h-4 bg-blue-400 animate-blink"></span>}
+                                </span>
+                            </div>
                         ) : (
-                            <div className="h-full flex items-center justify-center text-gray-600 italic">
-                                마이크 버튼을 눌러 녹음을 시작하세요...
+                            <div className="h-full flex flex-col items-center justify-center text-slate-500">
+                                <Mic className="w-8 h-8 mb-2 opacity-50" />
+                                <p className="text-sm">마이크 버튼을 눌러 녹음을 시작하세요</p>
                             </div>
                         )}
                     </div>
-                </div>
+                </motion.div>
 
                 {/* 화자별 구분된 텍스트 표시 영역 */}
                 {speakerTranscripts.length > 0 && (
-                    <div className="mb-8">
-                        <h3 className="text-sm font-semibold text-gray-400 mb-2 flex items-center gap-2">
-                            <span>화자별 구분</span>
+                    <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.5 }}
+                        className="mb-8"
+                    >
+                        <div className="flex items-center gap-2 mb-3">
+                            <div className="w-1 h-5 bg-gradient-to-b from-green-400 to-emerald-400 rounded-full"></div>
+                            <h3 className="text-sm font-semibold text-slate-300 flex items-center gap-2">
+                                <span>화자별 구분</span>
+                                <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-400 text-xs rounded-full">
+                                    {speakerTranscripts.length}개 세그먼트
+                                </span>
+                            </h3>
                             {isProcessingSpeakers && (
-                                <Loader2 className="w-4 h-4 animate-spin text-blue-400" />
+                                <Loader2 className="w-4 h-4 animate-spin text-blue-400 ml-auto" />
                             )}
-                        </h3>
-                        <div className="h-64 overflow-y-auto bg-black/30 rounded-xl p-4 border border-white/10 font-mono text-sm leading-relaxed scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent">
+                        </div>
+                        <div className="h-64 overflow-y-auto bg-gradient-to-br from-slate-900/50 to-slate-800/30 rounded-2xl p-4 border border-slate-700/50 font-mono text-sm leading-relaxed backdrop-blur-sm space-y-3">
                             {speakerTranscripts.map((item, index) => {
                                 const speakerColor = SPEAKER_COLORS[index % SPEAKER_COLORS.length];
 
                                 return (
-                                    <div
+                                    <motion.div
                                         key={index}
-                                        className="mb-4 cursor-pointer hover:bg-white/5 p-2 rounded-lg transition-colors"
+                                        initial={{ opacity: 0, x: -10 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ delay: index * 0.05 }}
+                                        className="group cursor-pointer hover:bg-white/5 p-3 rounded-xl transition-all duration-200 border border-transparent hover:border-white/10 hover:shadow-lg hover:shadow-blue-500/5"
                                         onClick={() => playFromTimestamp(item.start)}
                                         title="클릭하여 이 부분부터 재생"
                                     >
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <span className={`font-bold ${speakerColor}`}>
-                                                [{item.speaker || `화자 ${index + 1}`}]
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <span className={`font-bold ${speakerColor} px-2 py-1 bg-white/5 rounded-lg text-xs`}>
+                                                {item.speaker || `화자 ${index + 1}`}
                                             </span>
-                                            <span className="text-xs text-gray-500">
+                                            <span className="text-xs text-slate-500 font-mono">
                                                 {formatTime(item.start)} - {formatTime(item.end)}
                                             </span>
+                                            <span className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
+                                                ▶
+                                            </span>
                                         </div>
-                                        <div className="text-gray-300 pl-4">
+                                        <div className="text-slate-300 pl-2 leading-relaxed">
                                             {item.text}
                                         </div>
-                                    </div>
+                                    </motion.div>
                                 );
                             })}
                         </div>
-                    </div>
+                    </motion.div>
                 )}
 
                 {/* 오디오 플레이어 */}
                 {audioUrl && (
-                    <div className="mb-6">
-                        <h3 className="text-sm font-semibold text-gray-400 mb-2">오디오 플레이어</h3>
-                        <audio
-                            ref={audioRef}
-                            src={audioUrl}
-                            controls
-                            className="w-full rounded-lg"
-                            style={{
-                                filter: 'invert(0.9) hue-rotate(180deg)',
-                                height: '40px'
-                            }}
-                        />
-                    </div>
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.6 }}
+                        className="mb-6"
+                    >
+                        <div className="flex items-center gap-2 mb-3">
+                            <div className="w-1 h-5 bg-gradient-to-b from-pink-400 to-rose-400 rounded-full"></div>
+                            <h3 className="text-sm font-semibold text-slate-300">오디오 플레이어</h3>
+                        </div>
+                        <div className="bg-gradient-to-br from-slate-900/50 to-slate-800/30 rounded-2xl p-4 border border-slate-700/50 backdrop-blur-sm">
+                            <audio
+                                ref={audioRef}
+                                src={audioUrl}
+                                controls
+                                className="w-full"
+                                style={{
+                                    filter: 'invert(0.85) hue-rotate(180deg) saturate(1.2)',
+                                    height: '48px',
+                                    borderRadius: '12px'
+                                }}
+                            />
+                        </div>
+                    </motion.div>
                 )}
 
                 {/* 컨트롤 버튼 영역 */}
-                <div className="flex flex-col items-center gap-6">
+                <div className="flex flex-col items-center gap-6 mt-8">
 
                     {/* 녹음 버튼 */}
                     <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
+                        whileHover={{ scale: status === 'connecting' ? 1 : 1.05 }}
+                        whileTap={{ scale: status === 'connecting' ? 1 : 0.95 }}
                         onClick={isRecording ? stopRecording : startRecording}
                         disabled={status === 'connecting'}
                         className={`
-              relative w-20 h-20 rounded-full flex items-center justify-center shadow-lg transition-all duration-300
+              relative w-24 h-24 rounded-full flex items-center justify-center shadow-2xl transition-all duration-300 group
               ${isRecording
-                                ? 'bg-red-500 hover:bg-red-600 shadow-red-500/50'
-                                : 'bg-blue-500 hover:bg-blue-600 shadow-blue-500/50'}
+                                ? 'bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 shadow-red-500/50'
+                                : 'bg-gradient-to-br from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 shadow-blue-500/50'}
               ${status === 'connecting' ? 'opacity-70 cursor-not-allowed' : ''}
+              border-4 border-white/10
             `}
                     >
                         {status === 'connecting' ? (
-                            <Loader2 className="w-8 h-8 animate-spin text-white" />
+                            <Loader2 className="w-10 h-10 animate-spin text-white" />
                         ) : isRecording ? (
-                            <Square className="w-8 h-8 text-white fill-current" />
+                            <Square className="w-10 h-10 text-white fill-current group-hover:scale-110 transition-transform" />
                         ) : (
-                            <Mic className="w-8 h-8 text-white" />
+                            <Mic className="w-10 h-10 text-white group-hover:scale-110 transition-transform" />
                         )}
 
                         {/* 녹음 중일 때 퍼지는 애니메이션 효과 */}
                         {isRecording && (
-                            <span className="absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75 animate-ping"></span>
+                            <>
+                                <span className="absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75 animate-ping"></span>
+                                <span className="absolute inline-flex h-[110%] w-[110%] rounded-full bg-red-400 opacity-50 animate-pulse"></span>
+                            </>
                         )}
                     </motion.button>
 
-                    <div className="text-sm font-medium text-gray-300">
-                        {status === 'idle' && 'Click to Record'}
-                        {status === 'connecting' && '연결 중...'}
-                        {status === 'recording' && '듣고 있습니다...'}
-                        {status === 'processing' && '화자 분리 중...'}
-                        {error && <span className="text-red-400">{error}</span>}
+                    <div className="text-center">
+                        <div className="text-sm font-semibold">
+                            {status === 'idle' && (
+                                <span className="text-slate-300 flex items-center gap-2">
+                                    <span>녹음 시작하기</span>
+                                </span>
+                            )}
+                            {status === 'connecting' && (
+                                <span className="text-blue-400 flex items-center gap-2">
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                    연결 중...
+                                </span>
+                            )}
+                            {status === 'recording' && (
+                                <span className="text-red-400 flex items-center gap-2">
+                                    <span className="w-2 h-2 bg-red-400 rounded-full animate-pulse"></span>
+                                    듣고 있습니다
+                                </span>
+                            )}
+                            {status === 'processing' && (
+                                <span className="text-purple-400 flex items-center gap-2">
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                    화자 분리 중...
+                                </span>
+                            )}
+                        </div>
+                        {error && (
+                            <motion.div
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="mt-2 text-xs text-red-400 bg-red-500/10 px-3 py-1.5 rounded-lg border border-red-500/20"
+                            >
+                                {error}
+                            </motion.div>
+                        )}
                     </div>
 
                     {/* 다운로드 버튼들 */}
-                    <div className="flex flex-wrap gap-3 mt-4 justify-center">
+                    <div className="flex flex-wrap gap-3 mt-4 justify-center w-full max-w-md">
                         <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
+                            whileHover={{ scale: !hasAudio ? 1 : 1.02 }}
+                            whileTap={{ scale: !hasAudio ? 1 : 0.98 }}
                             onClick={downloadWav}
                             disabled={!hasAudio}
-                            className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg border border-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            className="flex-1 flex items-center justify-center gap-2 px-5 py-3 bg-gradient-to-br from-slate-800/50 to-slate-700/50 hover:from-slate-700/50 hover:to-slate-600/50 rounded-xl border border-slate-600/50 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 shadow-lg backdrop-blur-sm group"
                         >
-                            <Download className="w-4 h-4" />
-                            <span>Save Audio</span>
+                            <Download className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                            <span className="text-sm font-medium">오디오</span>
                         </motion.button>
 
                         <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
+                            whileHover={{ scale: (!transcript && !partialTranscript && speakerTranscripts.length === 0) ? 1 : 1.02 }}
+                            whileTap={{ scale: (!transcript && !partialTranscript && speakerTranscripts.length === 0) ? 1 : 0.98 }}
                             onClick={downloadTxt}
                             disabled={!transcript && !partialTranscript && speakerTranscripts.length === 0}
-                            className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg border border-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            className="flex-1 flex items-center justify-center gap-2 px-5 py-3 bg-gradient-to-br from-slate-800/50 to-slate-700/50 hover:from-slate-700/50 hover:to-slate-600/50 rounded-xl border border-slate-600/50 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 shadow-lg backdrop-blur-sm group"
                         >
-                            <FileText className="w-4 h-4" />
-                            <span>Save Text</span>
+                            <FileText className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                            <span className="text-sm font-medium">텍스트</span>
                         </motion.button>
 
                         {speakerTranscripts.length > 0 && (
                             <motion.button
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
+                                initial={{ opacity: 0, scale: 0.9 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
                                 onClick={downloadSpeakerTranscripts}
-                                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 rounded-lg border border-blue-400/30 transition-colors shadow-lg"
+                                className="flex-1 flex items-center justify-center gap-2 px-5 py-3 bg-gradient-to-br from-emerald-500/90 to-green-600/90 hover:from-emerald-600 hover:to-green-700 rounded-xl border border-emerald-400/30 transition-all duration-200 shadow-lg shadow-emerald-500/25 group"
                             >
-                                <FileText className="w-4 h-4" />
-                                <span>Save Speaker Text</span>
+                                <FileText className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                                <span className="text-sm font-medium">화자별</span>
                             </motion.button>
                         )}
                     </div>
 
                 </div>
             </div>
+            </motion.div>
+
+            {/* Footer */}
+            <motion.footer
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1 }}
+                className="mt-8 text-center text-slate-500 text-xs relative z-10"
+            >
+                <p>Built with ❤️ using ElevenLabs Speech-to-Text API</p>
+            </motion.footer>
         </div>
     );
 };
