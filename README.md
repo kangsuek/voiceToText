@@ -94,8 +94,8 @@ cp .env.example .env
 
   Backend (FastAPI - http://localhost:8000):
   - GET /api/get-token: ElevenLabs Realtime API 토큰 발급
-  - POST /api/transcribe-with-speakers: 오디오 파일을 받아 화자 분리된 텍스트 반환
-    - backend_python/routers/auth.py:24-56
+  - POST /api/transcribe: 오디오 파일을 받아 화자 분리된 텍스트 반환
+    - backend/routers/auth.py:24-56
 
   이제 2명 이상의 화자가 있는 대화를 녹음하면 자동으로 구분되어 표시됩니다! 🎤👥
 
@@ -103,6 +103,6 @@ cp .env.example .env
 
 - **Frontend**: React + Vite, TailwindCSS, Framer Motion
 - **Backend**: Python FastAPI
-- **API**: ElevenLabs Scribe v2 (Realtime), ElevenLabs Scribe v1 (화자 분리)
+- **API**: ElevenLabs Scribe v2 (Realtime), ElevenLabs Scribe v2 (화자 분리)
 
 ---

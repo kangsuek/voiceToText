@@ -47,4 +47,4 @@ if __name__ == "__main__":
     # host="0.0.0.0": 모든 네트워크 인터페이스에서 접근 허용 (외부 접속 가능)
     # port=8000: 8000번 포트 사용
     # reload=True: 코드 변경 시 서버 자동 재시작 (개발 모드용)
-    uvicorn.run("backend_python.main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("backend.main:app", host="0.0.0.0", port=8000, reload=True)
