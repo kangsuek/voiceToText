@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form
-from ..services.elevenlabs import get_realtime_token, transcribe_with_speakers, group_by_speaker
+from services.elevenlabs import get_realtime_token, transcribe_with_speakers, group_by_speaker
 from typing import Optional, List, Dict, Any
 from pydantic import BaseModel
 

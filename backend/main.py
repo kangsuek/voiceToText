@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .routers import auth
-from .config import settings
+from routers import auth
+from config import settings
 
 # --- FastAPI 앱 초기화 ---
 # title: API 문서(Swagger UI)에 표시될 제목

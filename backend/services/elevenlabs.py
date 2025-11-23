@@ -1,5 +1,5 @@
 import httpx
-from ..config import settings
+from config import settings
 from typing import List, Dict, Any
 
 async def get_realtime_token():
