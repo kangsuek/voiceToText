@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     """
     
     # Whisper Model Settings
-    MODEL_SIZE: str = "base"  # tiny, base, small, medium, large-v3
+    MODEL_SIZE: str = "small"  # tiny, base, small, medium, large-v3
     DEVICE: str = "cpu"  # cpu or cuda
     COMPUTE_TYPE: str = "int8"  # int8, int8_float16, float16, float32
     

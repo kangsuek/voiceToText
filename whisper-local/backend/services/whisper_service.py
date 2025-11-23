@@ -87,17 +87,18 @@ class WhisperService:
                 language=language,
                 beam_size=beam_size,
                 word_timestamps=word_timestamps,
-                vad_filter=True,  # VAD 필터로 무음 구간 제거
-                vad_parameters=dict(min_silence_duration_ms=500)
+                vad_filter=False,  # VAD 필터 비활성화 (조용한 음성도 처리)
             )
             
             logger.info(f"감지된 언어: {info.language} (확률: {info.language_probability:.2f})")
             
             # Generator를 리스트로 변환하여 실제 처리 수행
             segments_list = list(segments_generator)
+            logger.info(f"세그먼트 수: {len(segments_list)}")
             
             # 전체 텍스트 생성
             full_text = " ".join([segment.text.strip() for segment in segments_list])
+            logger.info(f"전체 텍스트 길이: {len(full_text)}, 내용: '{full_text[:100]}'...")
             
             # 세그먼트 데이터 포맷팅
             formatted_segments = []
@@ -135,10 +136,11 @@ class WhisperService:
             return result
             
         finally:
-            # 임시 파일 삭제
-            if os.path.exists(temp_path):
-                os.unlink(temp_path)
-                logger.debug(f"임시 파일 삭제: {temp_path}")
+            # 디버깅을 위해 임시 파일 유지 (나중에 삭제 가능)
+            logger.info(f"임시 오디오 파일 저장됨: {temp_path}")
+            # if os.path.exists(temp_path):
+            #     os.unlink(temp_path)
+            #     logger.debug(f"임시 파일 삭제: {temp_path}")
 
 
 # 싱글톤 인스턴스 (앱 시작 시 한 번만 생성)

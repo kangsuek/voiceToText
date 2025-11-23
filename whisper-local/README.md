@@ -1,6 +1,7 @@
 # Whisper Local - 로컬 음성 인식 솔루션
 
 Faster-Whisper를 사용한 완전 로컬 음성 인식 애플리케이션입니다.
+* API 기술문서는 https://github.com/SYSTRAN/faster-whisper 참고
 
 ## 특징
 

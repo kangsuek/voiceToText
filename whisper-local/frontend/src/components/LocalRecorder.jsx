@@ -21,6 +21,7 @@ const LocalRecorder = () => {
     const [detectedLanguage, setDetectedLanguage] = useState('');
     const [languageProbability, setLanguageProbability] = useState(0);
     const [language, setLanguage] = useState('EN'); // 언어 선택 상태
+    const [realtimeTranscript, setRealtimeTranscript] = useState(''); // 실시간 텍스트
 
     // Refs
     const mediaRecorderRef = useRef(null);
@@ -33,7 +34,8 @@ const LocalRecorder = () => {
             setStatus('recording');
             setIsRecording(true);
             setTranscript('');
-            setSegments([]);
+            setTranscript('');
+            setRealtimeTranscript(''); // 실시간 텍스트 초기화
             setHasAudio(false);
             setDetectedLanguage('');
             audioChunksRef.current = [];
@@ -44,16 +46,40 @@ const LocalRecorder = () => {
                 audioUrlRef.current = null;
             }
 
-            // 마이크 권한 요청
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            // 마이크 권한 요청 (더 나은 오디오 품질 설정)
+            const stream = await navigator.mediaDevices.getUserMedia({
+                audio: {
+                    echoCancellation: true,
+                    noiseSuppression: true,
+                    autoGainControl: true,
+                    sampleRate: 48000
+                }
+            });
 
-            // MediaRecorder 설정
-            const mediaRecorder = new MediaRecorder(stream);
+            console.log('오디오 스트림 획득:', stream.getAudioTracks()[0].getSettings());
 
-            mediaRecorder.ondataavailable = (event) => {
+            // MediaRecorder 설정 (더 나은 호환성을 위해 mimeType 지정)
+            let options = { mimeType: 'audio/webm;codecs=opus' };
+
+            // 브라우저가 지원하지 않으면 기본값 사용
+            if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                console.warn('audio/webm;codecs=opus not supported, using default');
+                options = {};
+            }
+
+            const mediaRecorder = new MediaRecorder(stream, options);
+            console.log('MediaRecorder mimeType:', mediaRecorder.mimeType);
+
+            mediaRecorder.ondataavailable = async (event) => {
                 if (event.data.size > 0) {
+                    console.log('데이터 수신:', event.data.size, 'bytes');
                     audioChunksRef.current.push(event.data);
                     setHasAudio(true);
+
+                    // 3초마다 (청크 3개가 모이면) 실시간 인식 수행
+                    if (audioChunksRef.current.length % 3 === 0) {
+                        await processRealtimeTranscription();
+                    }
                 }
             };
 
@@ -62,7 +88,8 @@ const LocalRecorder = () => {
                 await processTranscription();
             };
 
-            mediaRecorder.start();
+            // timeslice를 사용하여 1초마다 데이터 수집
+            mediaRecorder.start(1000);
             mediaRecorderRef.current = mediaRecorder;
 
             toast.success('녹음이 시작되었습니다');
@@ -83,11 +110,42 @@ const LocalRecorder = () => {
             mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
 
             setIsRecording(false);
-            toast.info('녹음이 중지되었습니다. 처리 중...');
+            toast.loading('녹음이 중지되었습니다. 처리 중...');
         }
     };
 
-    // 음성 인식 처리
+    // 실시간 음성 인식 처리
+    const processRealtimeTranscription = async () => {
+        if (audioChunksRef.current.length === 0) return;
+
+        // 전체 오디오 버퍼 사용
+        const currentChunks = [...audioChunksRef.current];
+
+        try {
+            const audioBlob = new Blob(currentChunks, { type: 'audio/webm' });
+            const formData = new FormData();
+            formData.append('audio', audioBlob, 'realtime.webm');
+            // 언어 자동 감지
+
+            const response = await fetch(API_ENDPOINTS.TRANSCRIBE, {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!response.ok) return;
+
+            const data = await response.json();
+            if (data.success && data.text.trim()) {
+                console.log('실시간 인식 결과:', data.text);
+                // 전체 오디오를 인식했으므로 텍스트를 교체 (누적 아님)
+                setRealtimeTranscript(data.text);
+            }
+        } catch (err) {
+            console.error('실시간 인식 오류:', err);
+        }
+    };
+
+    // 최종 음성 인식 처리
     const processTranscription = async () => {
         if (audioChunksRef.current.length === 0) {
             console.log('오디오 데이터가 없습니다');
@@ -105,6 +163,8 @@ const LocalRecorder = () => {
             // FormData 생성
             const formData = new FormData();
             formData.append('audio', audioBlob, 'recording.webm');
+            // 언어를 자동 감지하도록 설정 (번역하지 않음)
+            // formData.append('language', language.toLowerCase());
 
             // 백엔드로 전송
             console.log('백엔드로 음성 인식 요청 중...');
@@ -123,6 +183,9 @@ const LocalRecorder = () => {
             console.log('음성 인식 결과:', data);
 
             if (data.success) {
+                console.log('=== 텍스트 업데이트 ===');
+                console.log('받은 텍스트:', data.text);
+                console.log('텍스트 길이:', data.text.length);
                 setTranscript(data.text);
                 setDetectedLanguage(data.language);
                 setLanguageProbability(data.language_probability);
@@ -150,11 +213,12 @@ const LocalRecorder = () => {
 
         setStatus('processing');
         setTranscript('');
-        setSegments([]);
 
         try {
             const formData = new FormData();
             formData.append('audio', file);
+            // 언어를 자동 감지하도록 설정 (번역하지 않음)
+            // formData.append('language', language.toLowerCase());
 
             console.log('파일 업로드 중:', file.name);
             const response = await fetch(API_ENDPOINTS.TRANSCRIBE, {
@@ -294,8 +358,8 @@ const LocalRecorder = () => {
                                     )}
                                 </div>
                                 <div className="text-lg leading-relaxed text-gray-700">
-                                    {transcript ? (
-                                        <p>{transcript}</p>
+                                    {transcript || realtimeTranscript ? (
+                                        <p>{status === 'recording' ? realtimeTranscript : transcript}</p>
                                     ) : (
                                         <div>
                                             <p className="mb-4">
@@ -387,7 +451,7 @@ const LocalRecorder = () => {
                                     {isRecording && (
                                         <>
                                             <span className="absolute -inset-2 rounded-full border-4 border-red-400/30 animate-ping"></span>
-                                            <span className="absolute -inset-4 rounded-full border-4 border-red-400/20 animate-ping" style={{animationDelay: '0.5s'}}></span>
+                                            <span className="absolute -inset-4 rounded-full border-4 border-red-400/20 animate-ping" style={{ animationDelay: '0.5s' }}></span>
                                         </>
                                     )}
                                 </button>
