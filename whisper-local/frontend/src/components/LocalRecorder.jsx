@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
-import { Mic, Square, Download, FileText, Loader2, Upload } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Mic, Square, Download, FileText, Loader2, Globe, MessageCircle, Home, Settings } from 'lucide-react';
+import { motion } from 'framer-motion';
 import toast, { Toaster } from 'react-hot-toast';
 import { config } from '../config';
 
@@ -17,10 +17,10 @@ const LocalRecorder = () => {
     const [isRecording, setIsRecording] = useState(false);
     const [status, setStatus] = useState('idle'); // idle, recording, processing
     const [transcript, setTranscript] = useState('');
-    const [segments, setSegments] = useState([]);
     const [hasAudio, setHasAudio] = useState(false);
     const [detectedLanguage, setDetectedLanguage] = useState('');
     const [languageProbability, setLanguageProbability] = useState(0);
+    const [language, setLanguage] = useState('EN'); // 언어 선택 상태
 
     // Refs
     const mediaRecorderRef = useRef(null);
@@ -124,7 +124,6 @@ const LocalRecorder = () => {
 
             if (data.success) {
                 setTranscript(data.text);
-                setSegments(data.segments || []);
                 setDetectedLanguage(data.language);
                 setLanguageProbability(data.language_probability);
 
@@ -172,7 +171,6 @@ const LocalRecorder = () => {
 
             if (data.success) {
                 setTranscript(data.text);
-                setSegments(data.segments || []);
                 setDetectedLanguage(data.language);
                 setLanguageProbability(data.language_probability);
                 setHasAudio(true);
@@ -227,33 +225,38 @@ const LocalRecorder = () => {
         toast.success('오디오가 저장되었습니다');
     };
 
-    // 시간 포맷 (초 -> MM:SS)
-    const formatTime = (seconds) => {
-        if (!seconds && seconds !== 0) return '00:00';
-        const mins = Math.floor(seconds / 60);
-        const secs = Math.floor(seconds % 60);
-        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    };
-
     return (
-        <div className="min-h-screen bg-slate-950 text-slate-50 relative">
-            <div className="flex flex-col items-center justify-center min-h-screen p-4 sm:p-6 md:p-8">
+        <div className="min-h-screen relative overflow-hidden" style={{
+            background: 'linear-gradient(135deg, #FFF9E6 0%, #E6F3FF 25%, #F0E6FF 50%, #FFE6F0 75%, #E6F9FF 100%)'
+        }}>
+            {/* 언어 선택기 - 우측 상단 */}
+            <div className="absolute top-6 right-6 z-10">
+                <button
+                    onClick={() => setLanguage(language === 'EN' ? 'KO' : 'EN')}
+                    className="flex items-center gap-2 px-4 py-2 bg-white/80 backdrop-blur-sm rounded-full shadow-lg border-2 border-purple-200 hover:border-purple-300 transition-all"
+                >
+                    <Globe className="w-5 h-5 text-purple-600" />
+                    <span className="font-bold text-purple-600 text-lg">{language}</span>
+                </button>
+            </div>
+
+            <div className="flex flex-col items-center justify-center min-h-screen p-4 sm:p-6 md:p-8 pb-24">
 
                 <Toaster
                     position="top-center"
                     toastOptions={{
                         duration: 3000,
                         style: {
-                            background: '#1e293b',
-                            color: '#f8fafc',
-                            border: '1px solid #334155',
-                            borderRadius: '8px',
+                            background: '#ffffff',
+                            color: '#1f2937',
+                            border: '2px solid #e9d5ff',
+                            borderRadius: '12px',
                             padding: '12px 16px',
                         },
                         success: {
                             iconTheme: {
                                 primary: '#8b5cf6',
-                                secondary: '#f8fafc',
+                                secondary: '#ffffff',
                             },
                         },
                     }}
@@ -267,166 +270,182 @@ const LocalRecorder = () => {
                 >
                     {/* 헤더 */}
                     <div className="text-center mb-10">
-                        <h1 className="text-2xl sm:text-3xl font-semibold text-slate-100 mb-2">
-                            로컬 음성 인식
+                        <h1 className="text-5xl sm:text-6xl font-black text-gray-900 mb-2 flex items-center justify-center gap-3">
+                            Realtime Scribe
+                            <MessageCircle className="w-12 h-12 text-purple-600 fill-purple-200" />
                         </h1>
-                        <p className="text-slate-500 text-sm font-medium">
-                            Faster-Whisper로 완전 로컬 음성 인식
-                        </p>
                     </div>
 
                     {/* 메인 컨텐츠 */}
-                    <div className="bg-slate-900/50 rounded-2xl border border-slate-800/50 p-6 sm:p-8 shadow-sm backdrop-blur-sm">
+                    <div className="mb-8">
 
-                        {/* 언어 정보 */}
-                        {detectedLanguage && (
-                            <div className="mb-6 p-3 bg-violet-500/10 border border-violet-500/20 rounded-lg">
-                                <p className="text-sm text-violet-300">
-                                    감지된 언어: <span className="font-semibold">{detectedLanguage}</span>
-                                    {' '}({(languageProbability * 100).toFixed(1)}%)
-                                </p>
-                            </div>
-                        )}
-
-                        {/* 텍스트 표시 영역 */}
+                        {/* 텍스트 표시 영역 - 대시 보더 스타일 */}
                         <div className="mb-8">
-                            <div className="flex items-center justify-between mb-3">
-                                <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                                    인식된 텍스트
-                                </h3>
-                                {status === 'processing' && (
-                                    <span className="flex items-center gap-1.5 text-xs text-violet-400 font-medium">
-                                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                        처리 중...
-                                    </span>
-                                )}
-                            </div>
-                            <div className="min-h-48 max-h-96 overflow-y-auto bg-slate-950/30 rounded-xl p-4 border border-slate-800/50 text-sm leading-7 text-slate-300">
-                                {transcript ? (
-                                    <p>{transcript}</p>
-                                ) : (
-                                    <div className="h-full flex flex-col items-center justify-center text-slate-600">
-                                        <p className="text-sm">녹음하거나 파일을 업로드하세요</p>
+                            <div className="relative bg-blue-50/80 backdrop-blur-sm rounded-3xl p-8 border-4 border-dashed border-blue-300 shadow-xl min-h-80">
+                                <div className="mb-4">
+                                    <h3 className="text-2xl font-bold text-gray-800 mb-4">
+                                        REAL-TIME TRANSCRIPT
+                                    </h3>
+                                    {status === 'processing' && (
+                                        <span className="flex items-center gap-2 text-sm text-purple-600 font-medium">
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                            Processing...
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="text-lg leading-relaxed text-gray-700">
+                                    {transcript ? (
+                                        <p>{transcript}</p>
+                                    ) : (
+                                        <div>
+                                            <p className="mb-4">
+                                                {language === 'EN'
+                                                    ? "Hey everyone! 😊"
+                                                    : "안녕하세요! 😊"
+                                                }
+                                            </p>
+                                            <p>
+                                                {language === 'EN'
+                                                    ? "Tap the mic button below to start recording your awesome thoughts. It's super easy! 😊"
+                                                    : "아래 마이크 버튼을 눌러 녹음을 시작하세요. 정말 쉬워요! 😊"
+                                                }
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* 언어 정보 */}
+                                {detectedLanguage && (
+                                    <div className="mt-4 p-3 bg-purple-100 border-2 border-purple-200 rounded-xl">
+                                        <p className="text-sm text-purple-700">
+                                            Detected Language: <span className="font-semibold">{detectedLanguage}</span>
+                                            {' '}({(languageProbability * 100).toFixed(1)}%)
+                                        </p>
                                     </div>
                                 )}
                             </div>
                         </div>
 
-                        {/* 세그먼트 표시 */}
-                        {segments.length > 0 && (
+                        {/* 컨트롤 버튼 - 3개 버튼 레이아웃 */}
+                        <div className="flex items-end justify-center gap-6 mb-6">
+
+                            {/* Save Audio 버튼 (좌측) */}
                             <motion.div
-                                initial={{ opacity: 0, height: 0 }}
-                                animate={{ opacity: 1, height: 'auto' }}
-                                className="mb-8"
+                                className="flex flex-col items-center"
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
                             >
-                                <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">
-                                    타임스탬프 세그먼트 ({segments.length})
-                                </h3>
-                                <div className="max-h-64 overflow-y-auto space-y-2">
-                                    {segments.map((segment, index) => (
-                                        <div
-                                            key={index}
-                                            className="p-3 rounded-lg bg-slate-800/50 border border-slate-700/50"
-                                        >
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <span className="text-xs font-mono text-slate-500">
-                                                    {formatTime(segment.start)} - {formatTime(segment.end)}
-                                                </span>
-                                            </div>
-                                            <p className="text-slate-300 text-sm">{segment.text}</p>
-                                        </div>
-                                    ))}
+                                <button
+                                    onClick={downloadAudio}
+                                    disabled={!hasAudio}
+                                    className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-400 to-blue-500 hover:from-blue-500 hover:to-blue-600 shadow-2xl flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 border-4 border-white/50"
+                                    style={{
+                                        boxShadow: '0 8px 24px rgba(59, 130, 246, 0.4), inset 0 -8px 16px rgba(0, 0, 0, 0.1)'
+                                    }}
+                                >
+                                    <Download className="w-10 h-10 text-white" strokeWidth={2.5} />
+                                </button>
+                                <div className="mt-3 px-4 py-2 bg-white rounded-2xl shadow-lg">
+                                    <p className="font-black text-gray-900 text-base">
+                                        {language === 'EN' ? 'Save' : '저장'}
+                                    </p>
+                                    <p className="font-black text-gray-900 text-base">
+                                        {language === 'EN' ? 'Audio' : '오디오'}
+                                    </p>
                                 </div>
                             </motion.div>
-                        )}
 
-                        {/* 컨트롤 버튼 */}
-                        <div className="flex flex-col items-center gap-6">
-
-                            {/* 녹음 버튼 */}
-                            <div className="relative">
+                            {/* 중앙 마이크 버튼 (크고 입체적) */}
+                            <motion.div
+                                className="flex flex-col items-center -mb-4"
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                            >
                                 <button
                                     onClick={isRecording ? stopRecording : startRecording}
                                     disabled={status === 'processing'}
                                     className={`
-                    relative w-16 h-16 rounded-full flex items-center justify-center transition-all duration-300
-                    ${isRecording
-                                            ? 'bg-rose-500 hover:bg-rose-600 text-white shadow-lg shadow-rose-500/20'
-                                            : 'bg-violet-600 hover:bg-violet-700 text-white shadow-lg shadow-violet-600/20'}
-                    ${status === 'processing' ? 'opacity-50 cursor-not-allowed' : ''}
-                  `}
+                                        relative w-40 h-40 rounded-full flex items-center justify-center transition-all duration-300
+                                        ${isRecording
+                                            ? 'bg-gradient-to-br from-red-500 to-red-600'
+                                            : 'bg-gradient-to-br from-purple-500 via-purple-600 to-purple-700'}
+                                        ${status === 'processing' ? 'opacity-50 cursor-not-allowed' : ''}
+                                        border-8 border-white/30 shadow-2xl
+                                    `}
+                                    style={{
+                                        boxShadow: isRecording
+                                            ? '0 20px 40px rgba(239, 68, 68, 0.5), inset 0 -12px 24px rgba(0, 0, 0, 0.2), 0 0 60px rgba(239, 68, 68, 0.3)'
+                                            : '0 20px 40px rgba(139, 92, 246, 0.5), inset 0 -12px 24px rgba(0, 0, 0, 0.2), 0 0 60px rgba(139, 92, 246, 0.3)'
+                                    }}
                                 >
                                     {isRecording ? (
-                                        <Square className="w-6 h-6 fill-current" />
+                                        <Square className="w-16 h-16 fill-white text-white" />
                                     ) : (
-                                        <Mic className="w-6 h-6" />
+                                        <Mic className="w-20 h-20 text-white" strokeWidth={2} />
                                     )}
 
                                     {isRecording && (
-                                        <span className="absolute -inset-1 rounded-full border border-rose-500/30 animate-ping"></span>
+                                        <>
+                                            <span className="absolute -inset-2 rounded-full border-4 border-red-400/30 animate-ping"></span>
+                                            <span className="absolute -inset-4 rounded-full border-4 border-red-400/20 animate-ping" style={{animationDelay: '0.5s'}}></span>
+                                        </>
                                     )}
                                 </button>
-                            </div>
+                            </motion.div>
 
-                            {/* 상태 텍스트 */}
-                            <div className="text-center h-6">
-                                <div className="text-sm font-medium">
-                                    {status === 'idle' && (
-                                        <span className="text-slate-500">녹음 시작 또는 파일 업로드</span>
-                                    )}
-                                    {status === 'recording' && (
-                                        <span className="text-rose-400 flex items-center gap-2">
-                                            <span className="w-1.5 h-1.5 bg-rose-400 rounded-full animate-pulse"></span>
-                                            녹음 중...
-                                        </span>
-                                    )}
-                                    {status === 'processing' && (
-                                        <span className="text-violet-400 flex items-center gap-2">
-                                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                            음성 인식 처리 중...
-                                        </span>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* 파일 업로드 버튼 */}
-                            <div className="w-full">
-                                <label className="flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-sm font-medium transition-colors cursor-pointer">
-                                    <Upload className="w-4 h-4" />
-                                    <span>오디오 파일 업로드</span>
-                                    <input
-                                        type="file"
-                                        accept="audio/*"
-                                        onChange={handleFileUpload}
-                                        className="hidden"
-                                        disabled={status === 'processing' || isRecording}
-                                    />
-                                </label>
-                            </div>
-
-                            {/* 다운로드 버튼들 */}
-                            <div className="flex items-center gap-3 w-full">
-                                <button
-                                    onClick={downloadAudio}
-                                    disabled={!hasAudio}
-                                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    <Download className="w-4 h-4" />
-                                    <span>오디오</span>
-                                </button>
-
+                            {/* Save Text 버튼 (우측) */}
+                            <motion.div
+                                className="flex flex-col items-center"
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                            >
                                 <button
                                     onClick={downloadText}
                                     disabled={!transcript}
-                                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="w-24 h-24 rounded-full bg-gradient-to-br from-pink-400 to-pink-500 hover:from-pink-500 hover:to-pink-600 shadow-2xl flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 border-4 border-white/50"
+                                    style={{
+                                        boxShadow: '0 8px 24px rgba(236, 72, 153, 0.4), inset 0 -8px 16px rgba(0, 0, 0, 0.1)'
+                                    }}
                                 >
-                                    <FileText className="w-4 h-4" />
-                                    <span>텍스트</span>
+                                    <FileText className="w-10 h-10 text-white" strokeWidth={2.5} />
                                 </button>
-                            </div>
+                                <div className="mt-3 px-4 py-2 bg-white rounded-2xl shadow-lg">
+                                    <p className="font-black text-gray-900 text-base">
+                                        {language === 'EN' ? 'Save' : '저장'}
+                                    </p>
+                                    <p className="font-black text-gray-900 text-base">
+                                        {language === 'EN' ? 'Text' : '텍스트'}
+                                    </p>
+                                </div>
+                            </motion.div>
                         </div>
+
+                        {/* 파일 업로드 버튼 (숨김 처리, 필요시 사용) */}
+                        <input
+                            type="file"
+                            accept="audio/*"
+                            onChange={handleFileUpload}
+                            className="hidden"
+                            id="audio-upload"
+                            disabled={status === 'processing' || isRecording}
+                        />
                     </div>
                 </motion.div>
+            </div>
+
+            {/* 하단 네비게이션 바 */}
+            <div className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-md border-t-2 border-gray-200 py-4 px-6 shadow-lg">
+                <div className="max-w-md mx-auto flex items-center justify-around">
+                    <button className="flex flex-col items-center gap-1 text-gray-400 hover:text-purple-600 transition-colors">
+                        <Home className="w-7 h-7" strokeWidth={2} />
+                    </button>
+                    <button className="flex flex-col items-center gap-1 text-purple-600">
+                        <Mic className="w-7 h-7" strokeWidth={2} />
+                    </button>
+                    <button className="flex flex-col items-center gap-1 text-gray-400 hover:text-purple-600 transition-colors">
+                        <Settings className="w-7 h-7" strokeWidth={2} />
+                    </button>
+                </div>
             </div>
         </div>
     );

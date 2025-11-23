@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* 전역 스타일 리셋 및 기본 스타일 */
 * {
   margin: 0;
@@ -11,8 +15,6 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: #0f172a;
-  color: #f8fafc;
 }
 
 code {
