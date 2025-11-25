@@ -31,9 +31,22 @@ const LocalRecorder = () => {
     // 녹음 시작
     const startRecording = async () => {
         try {
+            // 브라우저 호환성 체크
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                toast.error('이 브라우저는 마이크를 지원하지 않습니다');
+                return;
+            }
+
+            // HTTPS 체크 (localhost 제외)
+            if (window.location.protocol !== 'https:' &&
+                !window.location.hostname.includes('localhost') &&
+                window.location.hostname !== '127.0.0.1') {
+                toast.error('보안상의 이유로 HTTPS 연결이 필요합니다');
+                return;
+            }
+
             setStatus('recording');
             setIsRecording(true);
-            setTranscript('');
             setTranscript('');
             setRealtimeTranscript(''); // 실시간 텍스트 초기화
             setHasAudio(false);
@@ -47,6 +60,7 @@ const LocalRecorder = () => {
             }
 
             // 마이크 권한 요청 (더 나은 오디오 품질 설정)
+            console.log('마이크 권한 요청 중...');
             const stream = await navigator.mediaDevices.getUserMedia({
                 audio: {
                     echoCancellation: true,
@@ -95,7 +109,25 @@ const LocalRecorder = () => {
             toast.success('녹음이 시작되었습니다');
         } catch (err) {
             console.error('녹음 시작 실패:', err);
-            toast.error('마이크 접근이 거부되었습니다');
+
+            // 에러 타입별 메시지
+            let errorMessage = '마이크 접근이 거부되었습니다';
+
+            if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                errorMessage = '마이크 권한이 거부되었습니다. 브라우저 설정에서 마이크 권한을 허용해주세요';
+            } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+                errorMessage = '마이크를 찾을 수 없습니다. 마이크가 연결되어 있는지 확인해주세요';
+            } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+                errorMessage = '마이크를 사용할 수 없습니다. 다른 프로그램에서 사용 중일 수 있습니다';
+            } else if (err.name === 'OverconstrainedError' || err.name === 'ConstraintNotSatisfiedError') {
+                errorMessage = '마이크 설정을 적용할 수 없습니다';
+            } else if (err.name === 'TypeError') {
+                errorMessage = '브라우저가 마이크를 지원하지 않습니다';
+            } else if (err.name === 'SecurityError') {
+                errorMessage = '보안상의 이유로 마이크에 접근할 수 없습니다. HTTPS를 사용해주세요';
+            }
+
+            toast.error(errorMessage, { duration: 5000 });
             setStatus('idle');
             setIsRecording(false);
         }
